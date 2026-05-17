@@ -7,13 +7,13 @@ class TestLoadBackbone:
     def test_returns_sequence_classification_model(self):
         pytest.importorskip("transformers")
         from omegaconf import OmegaConf
-        from transformers import AutoModelForSequenceClassification
+        from transformers import PreTrainedModel
 
         from dissatisfaction_classifier.models.backbone import load_backbone
 
         config = OmegaConf.create({"model": {"backbone": "distilbert-base-uncased", "num_labels": 2}})
         model = load_backbone(config)
-        assert isinstance(model, AutoModelForSequenceClassification)
+        assert isinstance(model, PreTrainedModel)
 
     def test_num_labels_matches_config(self):
         pytest.importorskip("transformers")

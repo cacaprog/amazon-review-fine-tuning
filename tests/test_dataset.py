@@ -17,7 +17,7 @@ def valid_df():
             "text": [
                 "This product broke after one day and is terrible quality overall",
                 "Great sturdy table arrived quickly and looks beautiful in my office",
-                "Falls apart immediately very disappointed with this furniture purchase",
+                "Falls apart immediately very disappointed with this furniture purchase overall",
             ],
             "label": [1, 0, 1],
             "split": ["train", "train", "val"],
