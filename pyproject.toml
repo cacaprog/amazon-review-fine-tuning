@@ -3,7 +3,7 @@ name = "dissatisfaction-classifier"
 version = "0.1.0"
 description = "Critical Dissatisfaction Early Warning — transformer classifier on Amazon reviews"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.12"
 dependencies = [
     # HuggingFace ecosystem
     "transformers==4.40.1",
