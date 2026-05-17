@@ -38,13 +38,13 @@ and validated against constitution Principles I–V.
 
 **Purpose**: Project initialization and configuration files
 
-- [ ] T001 Create full directory structure per plan.md (configs/, data/raw/, data/processed/, data/etl/, notebooks/, src/dissatisfaction_classifier/, demo/, tests/, outputs/figures/, outputs/reports/, outputs/calibration/, outputs/checkpoints/)
-- [ ] T002 Create `pyproject.toml` with package metadata: name=`dissatisfaction-classifier`, packages under `src/dissatisfaction_classifier`, entry points for ETL script
-- [ ] T003 [P] Create `environment.yml` with pinned Python 3.11 and all dependencies: transformers, peft, datasets, captum, shap, torch (CUDA 12.x), scikit-learn, omegaconf, pandera, pytest, black, isort, gradio, wandb
-- [ ] T004 [P] Create `.gitignore` ignoring `data/raw/`, `data/processed/`, `outputs/checkpoints/`, `*.pyc`, `.wandb/`, `__pycache__/`
-- [ ] T005 [P] Create `configs/data_config.yaml` with raw_path, processed_dir, min_tokens=10, train_end_date=2016-12-31, val_end_date=2017-06-30, test_end_date=2018-12-31, seed=42, validation.schema_strict=true, validation.fail_on_invalid=true
-- [ ] T006 [P] Create `configs/model_config.yaml` with model.backbone=distilbert-base-uncased, model.num_labels=2, model.max_length=256, lora.r=8, lora.lora_alpha=16, lora.lora_dropout=0.1, lora.bias=none, lora.task_type=SEQ_CLS, hub.push_adapter=true, hub.repo_id placeholder
-- [ ] T007 [P] Create `configs/training_config.yaml` with output_dir=outputs/checkpoints, num_train_epochs=5, per_device_train_batch_size=16, per_device_eval_batch_size=32, learning_rate=2e-4, weight_decay=0.01, warmup_ratio=0.1, lr_scheduler_type=cosine, evaluation_strategy=epoch, save_strategy=epoch, load_best_model_at_end=true, metric_for_best_model=f1, fp16=true, seed=42, class_weight=balanced, logging_steps=100, report_to=wandb
+- [x] T001 Create full directory structure per plan.md (configs/, data/raw/, data/processed/, data/etl/, notebooks/, src/dissatisfaction_classifier/, demo/, tests/, outputs/figures/, outputs/reports/, outputs/calibration/, outputs/checkpoints/)
+- [x] T002 Create `pyproject.toml` with package metadata: name=`dissatisfaction-classifier`, packages under `src/dissatisfaction_classifier`, entry points for ETL script
+- [x] T003 [P] Create `environment.yml` with pinned Python 3.11 and all dependencies: transformers, peft, datasets, captum, shap, torch (CUDA 12.x), scikit-learn, omegaconf, pandera, pytest, black, isort, gradio, wandb
+- [x] T004 [P] Create `.gitignore` ignoring `data/raw/`, `data/processed/`, `outputs/checkpoints/`, `*.pyc`, `.wandb/`, `__pycache__/`
+- [x] T005 [P] Create `configs/data_config.yaml` with raw_path, processed_dir, min_tokens=10, train_end_date=2016-12-31, val_end_date=2017-06-30, test_end_date=2018-12-31, seed=42, validation.schema_strict=true, validation.fail_on_invalid=true
+- [x] T006 [P] Create `configs/model_config.yaml` with model.backbone=distilbert-base-uncased, model.num_labels=2, model.max_length=256, lora.r=8, lora.lora_alpha=16, lora.lora_dropout=0.1, lora.bias=none, lora.task_type=SEQ_CLS, hub.push_adapter=true, hub.repo_id placeholder
+- [x] T007 [P] Create `configs/training_config.yaml` with output_dir=outputs/checkpoints, num_train_epochs=5, per_device_train_batch_size=16, per_device_eval_batch_size=32, learning_rate=2e-4, weight_decay=0.01, warmup_ratio=0.1, lr_scheduler_type=cosine, evaluation_strategy=epoch, save_strategy=epoch, load_best_model_at_end=true, metric_for_best_model=f1, fp16=true, seed=42, class_weight=balanced, logging_steps=100, report_to=wandb
 
 ---
 
@@ -54,11 +54,11 @@ and validated against constitution Principles I–V.
 
 **⚠️ CRITICAL**: No user story implementation can begin until this phase is complete
 
-- [ ] T008 Create `src/dissatisfaction_classifier/__init__.py` (empty package marker) and `src/dissatisfaction_classifier/data/__init__.py`, `models/__init__.py`, `training/__init__.py`, `evaluation/__init__.py`, `explainability/__init__.py`, `inference/__init__.py`
-- [ ] T009 [P] Implement `src/dissatisfaction_classifier/data/preprocessing.py`: `build_text(row)` concatenating review_headline + ". " + review_body; `assign_label(star_rating)` returning 1 if ≤2 else 0; `assign_split(review_date, config)` returning train/val/test per data_config.yaml date boundaries; `filter_reviews(df, config)` applying verified_purchase, star_rating != 3, and min_tokens filters
-- [ ] T010 [P] Implement `src/dissatisfaction_classifier/data/validation.py`: define pandera `ProcessedReview` schema (review_id unique non-null, star_rating isin[1,2,4,5], verified_purchase eq "Y", text len>=10, label isin[0,1], split isin[train/val/test]); implement `validate_reviews_df(df, fail_on_invalid=True)` using lazy=True validation per contract in `specs/main/contracts/dataset-interface.md`
-- [ ] T011 Implement `src/dissatisfaction_classifier/models/backbone.py`: `load_backbone(config)` calling `AutoModelForSequenceClassification.from_pretrained(config.model.backbone, num_labels=config.model.num_labels)`; log backbone name and total parameter count; no model name string literals
-- [ ] T012 Implement `src/dissatisfaction_classifier/models/lora_wrapper.py`: define `LORA_TARGET_MODULES = {"distilbert": ["q_lin","v_lin"], "bert": ["query","value"], "roberta": ["query","value"], "deberta": ["query_proj","value_proj"]}`; `apply_lora(model, config)` resolving family from config.model.backbone, calling `peft.get_peft_model()`, logging trainable param count and % per contract in `specs/main/contracts/model-interface.md`
+- [x] T008 Create `src/dissatisfaction_classifier/__init__.py` (empty package marker) and `src/dissatisfaction_classifier/data/__init__.py`, `models/__init__.py`, `training/__init__.py`, `evaluation/__init__.py`, `explainability/__init__.py`, `inference/__init__.py`
+- [x] T009 [P] Implement `src/dissatisfaction_classifier/data/preprocessing.py`: `build_text(row)` concatenating review_headline + ". " + review_body; `assign_label(star_rating)` returning 1 if ≤2 else 0; `assign_split(review_date, config)` returning train/val/test per data_config.yaml date boundaries; `filter_reviews(df, config)` applying verified_purchase, star_rating != 3, and min_tokens filters
+- [x] T010 [P] Implement `src/dissatisfaction_classifier/data/validation.py`: define pandera `ProcessedReview` schema (review_id unique non-null, star_rating isin[1,2,4,5], verified_purchase eq "Y", text len>=10, label isin[0,1], split isin[train/val/test]); implement `validate_reviews_df(df, fail_on_invalid=True)` using lazy=True validation per contract in `specs/main/contracts/dataset-interface.md`
+- [x] T011 Implement `src/dissatisfaction_classifier/models/backbone.py`: `load_backbone(config)` calling `AutoModelForSequenceClassification.from_pretrained(config.model.backbone, num_labels=config.model.num_labels)`; log backbone name and total parameter count; no model name string literals
+- [x] T012 Implement `src/dissatisfaction_classifier/models/lora_wrapper.py`: define `LORA_TARGET_MODULES = {"distilbert": ["q_lin","v_lin"], "bert": ["query","value"], "roberta": ["query","value"], "deberta": ["query_proj","value_proj"]}`; `apply_lora(model, config)` resolving family from config.model.backbone, calling `peft.get_peft_model()`, logging trainable param count and % per contract in `specs/main/contracts/model-interface.md`
 
 **Checkpoint**: All five foundational modules importable; backbone loads without hardcoded names; LoRA family lookup resolves for distilbert.
 
@@ -72,13 +72,13 @@ and validated against constitution Principles I–V.
 
 ### Tests for US1 ⚠️ Write FIRST — verify they FAIL before implementing
 
-- [ ] T013 [P] [US1] Write `tests/test_dataset.py`: test `DissatisfactionDataset.__len__()` returns correct count; test `__getitem__()` returns dict with input_ids shape (256,), attention_mask shape (256,), labels scalar in {0,1}; test `validate_reviews_df()` raises ValueError on invalid rows when fail_on_invalid=True; test `validate_reviews_df()` drops invalid rows and returns clean df when fail_on_invalid=False
+- [x] T013 [P] [US1] Write `tests/test_dataset.py`: test `DissatisfactionDataset.__len__()` returns correct count; test `__getitem__()` returns dict with input_ids shape (256,), attention_mask shape (256,), labels scalar in {0,1}; test `validate_reviews_df()` raises ValueError on invalid rows when fail_on_invalid=True; test `validate_reviews_df()` drops invalid rows and returns clean df when fail_on_invalid=False
 
 ### Implementation for US1
 
-- [ ] T014 [US1] Implement `src/dissatisfaction_classifier/data/dataset.py`: `DissatisfactionDataset(df, tokenizer, max_length=256)` with `__len__` and `__getitem__` returning {"input_ids", "attention_mask", "labels"} per contract in `specs/main/contracts/dataset-interface.md`; padding='max_length', truncation=True
-- [ ] T015 [US1] Implement `data/etl/prepare_reviews.py`: load `configs/data_config.yaml` via omegaconf; read raw TSV; call `filter_reviews()`, `build_text()`, `assign_label()`, `assign_split()`; call `validate_reviews_df(fail_on_invalid=True)`; save each split as Parquet to `data/processed/{train,val,test}.parquet`; log row counts per split and class balance
-- [ ] T016 [P] [US1] Create `notebooks/01_eda.ipynb` with sections: dataset provenance (source URL, size, temporal range), temporal distribution (monthly review volume plot), label distribution and class imbalance bar chart, verified vs unverified purchase counts with justification for filtering, star rating 1–5 histogram, text length distribution by label, 3 sample 1★ vs 3 sample 5★ reviews; conclude with key question: *Are there lexical signals separating extreme dissatisfaction even before fine-tuning?*
+- [x] T014 [US1] Implement `src/dissatisfaction_classifier/data/dataset.py`: `DissatisfactionDataset(df, tokenizer, max_length=256)` with `__len__` and `__getitem__` returning {"input_ids", "attention_mask", "labels"} per contract in `specs/main/contracts/dataset-interface.md`; padding='max_length', truncation=True
+- [x] T015 [US1] Implement `data/etl/prepare_reviews.py`: load `configs/data_config.yaml` via omegaconf; read raw TSV; call `filter_reviews()`, `build_text()`, `assign_label()`, `assign_split()`; call `validate_reviews_df(fail_on_invalid=True)`; save each split as Parquet to `data/processed/{train,val,test}.parquet`; log row counts per split and class balance
+- [x] T016 [P] [US1] Create `notebooks/01_eda.ipynb` with sections: dataset provenance (source URL, size, temporal range), temporal distribution (monthly review volume plot), label distribution and class imbalance bar chart, verified vs unverified purchase counts with justification for filtering, star rating 1–5 histogram, text length distribution by label, 3 sample 1★ vs 3 sample 5★ reviews; conclude with key question: *Are there lexical signals separating extreme dissatisfaction even before fine-tuning?*
 
 **Checkpoint**: ETL pipeline runs end-to-end; three Parquet files exist; `pytest tests/test_dataset.py` passes; `01_eda.ipynb` executes without errors.
 
@@ -92,15 +92,15 @@ and validated against constitution Principles I–V.
 
 ### Tests for US2 ⚠️ Write FIRST — verify they FAIL before implementing
 
-- [ ] T017 [P] [US2] Write `tests/test_model.py`: test `load_backbone()` returns `AutoModelForSequenceClassification` with `num_labels=2`; test `apply_lora()` returns `PeftModel`; test trainable parameter % < 5% for default LoRA config (r=8); test `LORA_TARGET_MODULES` keys cover {distilbert, bert, roberta, deberta}
+- [x] T017 [P] [US2] Write `tests/test_model.py`: test `load_backbone()` returns `AutoModelForSequenceClassification` with `num_labels=2`; test `apply_lora()` returns `PeftModel`; test trainable parameter % < 5% for default LoRA config (r=8); test `LORA_TARGET_MODULES` keys cover {distilbert, bert, roberta, deberta}
 
 ### Implementation for US2
 
-- [ ] T018 [US2] Implement `src/dissatisfaction_classifier/training/trainer.py`: subclass `Trainer`, override `compute_loss()` to use `nn.CrossEntropyLoss(weight=class_weights)`; `compute_class_weights(train_labels)` using `sklearn.utils.class_weight.compute_class_weight('balanced', classes=[0,1], y=train_labels)`; expose class weights as trainer attribute
-- [ ] T019 [P] [US2] Implement `src/dissatisfaction_classifier/training/callbacks.py`: `MetricsCallback` logging train/val loss and F1 to WandB each epoch; `compute_objective` returning F1 for best model selection
-- [ ] T020 [P] [US2] Implement `src/dissatisfaction_classifier/evaluation/metrics.py`: `compute_metrics(eval_pred)` returning {"auc_roc", "f1", "precision", "recall", "brier_score", "ece"} for HuggingFace Trainer; `fit_calibration(val_probs, val_labels, output_path)` fitting IsotonicRegression, computing pre/post ECE, exporting to `outputs/calibration/isotonic.pkl`; `export_metrics_json(metrics_dict, output_path)` writing to `outputs/reports/metrics.json`
-- [ ] T021 [US2] Create `notebooks/02_training.ipynb` with sections: ETL execution (call prepare_reviews.py inline), config loading via omegaconf, backbone instantiation + LoRA wrapping with trainable param count, class weight computation and justification, training run with loss curves (train + val), checkpoint selection rationale (best F1); key question: *How much does LoRA reduce compute cost without sacrificing performance?*
-- [ ] T022 [US2] Create `notebooks/03_evaluation.ipynb` with sections: performance on temporal test set (AUC-ROC, F1, precision, recall as table), calibration analysis (reliability diagram, Brier score, ECE, isotonic fit), confusion matrix at default (0.5) and optimal threshold, precision-recall curve with business cost framing (FP cost = unnecessary escalation, FN cost = reputation damage), baseline comparison table (majority class / TF-IDF+LR / frozen transformer / full fine-tune / LoRA), error analysis (3 representative FPs + 3 FNs, breakdown by star_rating and text length quartile and helpful_votes); call `export_metrics_json()` to write `outputs/reports/metrics.json`; key question: *At what threshold does the model become operationally useful?*
+- [x] T018 [US2] Implement `src/dissatisfaction_classifier/training/trainer.py`: subclass `Trainer`, override `compute_loss()` to use `nn.CrossEntropyLoss(weight=class_weights)`; `compute_class_weights(train_labels)` using `sklearn.utils.class_weight.compute_class_weight('balanced', classes=[0,1], y=train_labels)`; expose class weights as trainer attribute
+- [x] T019 [P] [US2] Implement `src/dissatisfaction_classifier/training/callbacks.py`: `MetricsCallback` logging train/val loss and F1 to WandB each epoch; `compute_objective` returning F1 for best model selection
+- [x] T020 [P] [US2] Implement `src/dissatisfaction_classifier/evaluation/metrics.py`: `compute_metrics(eval_pred)` returning {"auc_roc", "f1", "precision", "recall", "brier_score", "ece"} for HuggingFace Trainer; `fit_calibration(val_probs, val_labels, output_path)` fitting IsotonicRegression, computing pre/post ECE, exporting to `outputs/calibration/isotonic.pkl`; `export_metrics_json(metrics_dict, output_path)` writing to `outputs/reports/metrics.json`
+- [x] T021 [US2] Create `notebooks/02_training.ipynb` with sections: ETL execution (call prepare_reviews.py inline), config loading via omegaconf, backbone instantiation + LoRA wrapping with trainable param count, class weight computation and justification, training run with loss curves (train + val), checkpoint selection rationale (best F1); key question: *How much does LoRA reduce compute cost without sacrificing performance?*
+- [x] T022 [US2] Create `notebooks/03_evaluation.ipynb` with sections: performance on temporal test set (AUC-ROC, F1, precision, recall as table), calibration analysis (reliability diagram, Brier score, ECE, isotonic fit), confusion matrix at default (0.5) and optimal threshold, precision-recall curve with business cost framing (FP cost = unnecessary escalation, FN cost = reputation damage), baseline comparison table (majority class / TF-IDF+LR / frozen transformer / full fine-tune / LoRA), error analysis (3 representative FPs + 3 FNs, breakdown by star_rating and text length quartile and helpful_votes); call `export_metrics_json()` to write `outputs/reports/metrics.json`; key question: *At what threshold does the model become operationally useful?*
 
 **Checkpoint**: Training converges; `outputs/reports/metrics.json` committed; calibration model in `outputs/calibration/isotonic.pkl`; `pytest tests/test_model.py` passes; both notebooks execute without errors.
 
@@ -114,13 +114,13 @@ and validated against constitution Principles I–V.
 
 ### Tests for US3 ⚠️ Write FIRST — verify they FAIL before implementing
 
-- [ ] T023 [P] [US3] Write `tests/test_explainability.py`: test `get_integrated_gradients()` returns dict with keys {tokens, scores, html, delta}; test len(scores) == len(tokens); test all scores in [-1.01, 1.01]; test abs(delta) < 0.1 (convergence check); test `explain_with_shap()` raises ValueError when len(texts) > 10; test `explain_with_shap()` returns `shap.Explanation` for ≤10 texts
+- [x] T023 [P] [US3] Write `tests/test_explainability.py`: test `get_integrated_gradients()` returns dict with keys {tokens, scores, html, delta}; test len(scores) == len(tokens); test all scores in [-1.01, 1.01]; test abs(delta) < 0.1 (convergence check); test `explain_with_shap()` raises ValueError when len(texts) > 10; test `explain_with_shap()` returns `shap.Explanation` for ≤10 texts
 
 ### Implementation for US3
 
-- [ ] T024 [US3] Implement `src/dissatisfaction_classifier/explainability/integrated_gradients.py`: `get_integrated_gradients(model, tokenizer, text, target_label=1, n_steps=50, device="cuda")` resolving embedding layer backbone-agnostically, using zero-embedding baseline, computing captum IntegratedGradients, L2-normalizing token scores, generating HTML heatmap; return {tokens, scores, html, delta} per contract in `specs/main/contracts/explainability-interface.md`
-- [ ] T025 [US3] Implement `src/dissatisfaction_classifier/explainability/shap_explainer.py`: `explain_with_shap(pipeline, texts)` enforcing len(texts) <= 10 with ValueError, creating `shap.Explainer` with `shap.maskers.Text(r"\W")`, returning `shap.Explanation`; per contract in `specs/main/contracts/explainability-interface.md`
-- [ ] T026 [US3] Create `notebooks/04_explainability.ipynb` with sections: IG heatmaps on 3 selected examples (high-confidence 1★, borderline 2★, false negative from 03_evaluation.ipynb); SHAP text plots on same 3 examples; side-by-side token attribution comparison table; methodological discussion (theoretical grounding, computational cost, faithfulness, practical use); key question: *Which tokens in a furniture review most reliably signal critical dissatisfaction?*
+- [x] T024 [US3] Implement `src/dissatisfaction_classifier/explainability/integrated_gradients.py`: `get_integrated_gradients(model, tokenizer, text, target_label=1, n_steps=50, device="cuda")` resolving embedding layer backbone-agnostically, using zero-embedding baseline, computing captum IntegratedGradients, L2-normalizing token scores, generating HTML heatmap; return {tokens, scores, html, delta} per contract in `specs/main/contracts/explainability-interface.md`
+- [x] T025 [US3] Implement `src/dissatisfaction_classifier/explainability/shap_explainer.py`: `explain_with_shap(pipeline, texts)` enforcing len(texts) <= 10 with ValueError, creating `shap.Explainer` with `shap.maskers.Text(r"\W")`, returning `shap.Explanation`; per contract in `specs/main/contracts/explainability-interface.md`
+- [x] T026 [US3] Create `notebooks/04_explainability.ipynb` with sections: IG heatmaps on 3 selected examples (high-confidence 1★, borderline 2★, false negative from 03_evaluation.ipynb); SHAP text plots on same 3 examples; side-by-side token attribution comparison table; methodological discussion (theoretical grounding, computational cost, faithfulness, practical use); key question: *Which tokens in a furniture review most reliably signal critical dissatisfaction?*
 
 **Checkpoint**: `pytest tests/test_explainability.py` passes; IG and SHAP produce outputs on same examples; notebook executes without errors.
 
@@ -134,12 +134,12 @@ and validated against constitution Principles I–V.
 
 ### Tests for US4 ⚠️ Write FIRST — verify they FAIL before implementing
 
-- [ ] T027 [P] [US4] Write `tests/test_inference.py`: test `DissatisfactionPredictor.predict()` returns dict with keys {risk_score, label, explanation}; test risk_score in [0.0, 1.0]; test label in {0, 1}; test explanation has keys {tokens, scores, html}; test predict() on empty string raises ValueError; test predict_batch() returns list of same structure; test calibrated vs uncalibrated paths (with/without calibration_path)
+- [x] T027 [P] [US4] Write `tests/test_inference.py`: test `DissatisfactionPredictor.predict()` returns dict with keys {risk_score, label, explanation}; test risk_score in [0.0, 1.0]; test label in {0, 1}; test explanation has keys {tokens, scores, html}; test predict() on empty string raises ValueError; test predict_batch() returns list of same structure; test calibrated vs uncalibrated paths (with/without calibration_path)
 
 ### Implementation for US4
 
-- [ ] T028 [US4] Implement `src/dissatisfaction_classifier/inference/predictor.py`: `DissatisfactionPredictor.__init__()` loading backbone + LoRA from checkpoint_dir, tokenizer, optional isotonic calibration from calibration_path, setting eval() mode; `predict(text)` returning {risk_score, label, explanation} per contract in `specs/main/contracts/inference-interface.md`; `predict_batch(texts)` running IG (no SHAP) for each text
-- [ ] T029 [US4] Implement `demo/app.py`: Gradio `Interface` with single text input (gr.Textbox, placeholder "Paste a furniture review here…"), two outputs (gr.Number label="Dissatisfaction Risk Score", gr.HTML label="Token Attribution"); instantiate `DissatisfactionPredictor` at startup from best checkpoint; prediction function calls `predictor.predict(text)` and returns risk_score + explanation.html
+- [x] T028 [US4] Implement `src/dissatisfaction_classifier/inference/predictor.py`: `DissatisfactionPredictor.__init__()` loading backbone + LoRA from checkpoint_dir, tokenizer, optional isotonic calibration from calibration_path, setting eval() mode; `predict(text)` returning {risk_score, label, explanation} per contract in `specs/main/contracts/inference-interface.md`; `predict_batch(texts)` running IG (no SHAP) for each text
+- [x] T029 [US4] Implement `demo/app.py`: Gradio `Interface` with single text input (gr.Textbox, placeholder "Paste a furniture review here…"), two outputs (gr.Number label="Dissatisfaction Risk Score", gr.HTML label="Token Attribution"); instantiate `DissatisfactionPredictor` at startup from best checkpoint; prediction function calls `predictor.predict(text)` and returns risk_score + explanation.html
 
 **Checkpoint**: `pytest tests/test_inference.py` passes; Gradio app launches; demo works end-to-end.
 
@@ -149,7 +149,7 @@ and validated against constitution Principles I–V.
 
 **Purpose**: Reproducibility validation, committed artifacts, documentation
 
-- [ ] T030 [P] Create placeholder files to commit empty output directories: `outputs/figures/.gitkeep`, `outputs/reports/.gitkeep`, `outputs/calibration/.gitkeep`; verify `.gitignore` only ignores `outputs/checkpoints/`
+- [x] T030 [P] Create placeholder files to commit empty output directories: `outputs/figures/.gitkeep`, `outputs/reports/.gitkeep`, `outputs/calibration/.gitkeep`; verify `.gitignore` only ignores `outputs/checkpoints/`
 - [ ] T031 [P] Commit `outputs/reports/metrics.json` (from 03_evaluation.ipynb), `outputs/calibration/isotonic.pkl`, and representative figures from `outputs/figures/` — required by Constitution Principle I (Reproducibility First)
 - [ ] T032 [P] Run `pytest tests/ -v` — confirm all 4 test files pass; fix any regressions before proceeding
 - [ ] T033 Execute `quickstart.md` validation — run all 8 steps sequentially in a clean conda environment; update quickstart.md with any corrections found

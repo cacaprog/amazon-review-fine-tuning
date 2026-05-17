@@ -1,0 +1,33 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info/
+
+# Virtual environments
+.venv
+venv/
+
+# Data (gitignored — download via Kaggle)
+data/raw/
+data/processed/
+
+# Model checkpoints (large binaries — tracked via HuggingFace Hub)
+outputs/checkpoints/
+
+# Experiment tracking
+.wandb/
+wandb/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Environment
+.env
+*.env
+
+# OS
+.DS_Store
+Thumbs.db

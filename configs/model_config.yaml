@@ -1,0 +1,15 @@
+model:
+  backbone: "distilbert-base-uncased"
+  num_labels: 2
+  max_length: 256
+
+lora:
+  r: 8
+  lora_alpha: 16
+  lora_dropout: 0.1
+  bias: "none"
+  task_type: "SEQ_CLS"
+
+hub:
+  push_adapter: true
+  repo_id: "yourname/dissatisfaction-distilbert-lora"
