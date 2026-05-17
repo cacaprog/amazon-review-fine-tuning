@@ -6,8 +6,8 @@ dist/
 wheels/
 *.egg-info/
 
-# Virtual environments
-.venv
+# Virtual environments (uv creates .venv by default)
+.venv/
 venv/
 
 # Data (gitignored — download via Kaggle)

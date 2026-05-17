@@ -9,8 +9,8 @@ CPU-only execution is possible but training will be impractically slow.
 
 ## Prerequisites
 
-- [ ] conda or mamba installed
-- [ ] CUDA 12.x driver installed (`nvidia-smi` should show driver ≥525)
+- [ ] [uv](https://docs.astral.sh/uv/getting-started/installation/) installed (`curl -LsSf https://astral.sh/uv/install.sh | sh`)
+- [ ] CUDA 12.4 driver installed (`nvidia-smi` should show driver ≥550)
 - [ ] Kaggle account with API token at `~/.kaggle/kaggle.json`
 
 ---
@@ -21,9 +21,12 @@ CPU-only execution is possible but training will be impractically slow.
 git clone https://github.com/<yourname>/critical-dissatisfaction-early-warning.git
 cd critical-dissatisfaction-early-warning
 
-conda env create -f environment.yml
-conda activate dissatisfaction-classifier
+uv sync --group dev
 ```
+
+`uv sync` reads `pyproject.toml`, creates `.venv/`, and installs all dependencies
+including PyTorch from the CUDA 12.1 index. The Python version is pinned via
+`.python-version` (3.11).
 
 ---
 
@@ -44,8 +47,7 @@ The raw file is gitignored. This step requires Kaggle credentials.
 ## Step 3: Run ETL Pipeline
 
 ```bash
-python data/etl/prepare_reviews.py \
-    --config configs/data_config.yaml
+uv run python data/etl/prepare_reviews.py --config configs/data_config.yaml
 ```
 
 Outputs (gitignored):
@@ -61,7 +63,7 @@ Validation failures halt the pipeline with a full error report. Check
 ## Step 4: Exploratory Data Analysis (Optional)
 
 ```bash
-jupyter lab notebooks/01_eda.ipynb
+uv run jupyter lab notebooks/01_eda.ipynb
 ```
 
 Key question: *Are there lexical signals separating extreme dissatisfaction even before
@@ -74,7 +76,7 @@ fine-tuning?*
 ```bash
 # Backbone and LoRA config: configs/model_config.yaml
 # Training hyperparameters: configs/training_config.yaml
-python -m dissatisfaction_classifier.training.trainer \
+uv run python -m dissatisfaction_classifier.training.trainer \
     --model-config configs/model_config.yaml \
     --training-config configs/training_config.yaml \
     --data-config configs/data_config.yaml
@@ -86,7 +88,7 @@ Training logs to W&B (requires `wandb login`). Checkpoints saved to
 Training notebook alternative:
 
 ```bash
-jupyter lab notebooks/02_training.ipynb
+uv run jupyter lab notebooks/02_training.ipynb
 ```
 
 ---
@@ -94,7 +96,7 @@ jupyter lab notebooks/02_training.ipynb
 ## Step 6: Evaluate
 
 ```bash
-jupyter lab notebooks/03_evaluation.ipynb
+uv run jupyter lab notebooks/03_evaluation.ipynb
 ```
 
 Key question: *At what threshold does the model become operationally useful?*
@@ -106,7 +108,7 @@ Exports `outputs/reports/metrics.json` and `outputs/calibration/isotonic.pkl`.
 ## Step 7: Explainability Analysis
 
 ```bash
-jupyter lab notebooks/04_explainability.ipynb
+uv run jupyter lab notebooks/04_explainability.ipynb
 ```
 
 Key question: *Which tokens in a furniture review most reliably signal critical
@@ -120,7 +122,7 @@ Requires the best checkpoint from Step 5. SHAP cells are limited to ≤10 sample
 ## Step 8: Run the Local Demo
 
 ```bash
-python demo/app.py
+uv run python demo/app.py
 ```
 
 Opens a Gradio interface at `http://localhost:7860`. Paste any furniture review text
@@ -149,7 +151,7 @@ model = PeftModel.from_pretrained(base, "<yourname>/dissatisfaction-distilbert-l
 ## Run Tests
 
 ```bash
-pytest tests/ -v
+uv run pytest tests/ -v
 ```
 
 All tests MUST pass before any training or inference run. Tests cover:
