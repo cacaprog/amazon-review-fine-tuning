@@ -2,9 +2,9 @@ data:
   raw_path: "data/raw/amazon_reviews_us_Furniture_v1_00.tsv"
   processed_dir: "data/processed"
   min_tokens: 10
-  train_end_date: "2016-12-31"
-  val_end_date: "2017-06-30"
-  test_end_date: "2018-12-31"
+  train_end_date: "2014-12-31"
+  val_end_date: "2015-04-30"
+  test_end_date: "2015-08-31"
   seed: 42
   validation:
     schema_strict: true

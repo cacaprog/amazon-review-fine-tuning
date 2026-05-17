@@ -67,13 +67,14 @@ project. Violations break backbone swappability.
 Data splits MUST follow temporal ordering. Random splitting on time-ordered review data
 is prohibited.
 
-- The Furniture dataset spans **2012-03-08 (minimum) to 2021-12-14 (maximum)**. All split
-  boundary dates MUST fall within this range.
+- The Furniture dataset spans **2000-03-17 (minimum) to 2015-08-31 (maximum)** as
+  confirmed by inspection of the actual TSV file. All split boundary dates MUST fall
+  within this range.
 - Split boundaries MUST be declared in `configs/data_config.yaml` and MUST NOT be
-  overridden in source code. The reference boundaries from project.md §3.3 are:
-  - Train: up to 2016-12-31
-  - Validation: 2017-01-01 to 2017-06-30
-  - Test: 2017-07-01 to 2018-12-31
+  overridden in source code. The calibrated boundaries based on the actual dataset are:
+  - Train: up to 2014-12-31 (~406k rows, 70% of filtered data)
+  - Validation: 2015-01-01 to 2015-04-30 (~88k rows)
+  - Test: 2015-05-01 to 2015-08-31 (~82k rows)
 - Data outside the configured split boundaries is intentionally excluded from the analysis
   scope. Any change to these boundaries MUST be documented with a rationale and
   accompanied by a constitution amendment.
@@ -81,9 +82,8 @@ is prohibited.
   It MUST NOT access validation or test data.
 
 **Rationale**: Temporal splitting simulates real deployment conditions and prevents
-information leakage from future reviews into training. The dataset's true extent
-(2012–2021) provides headroom for future scope expansion without changing the architecture.
-Violating the no-random-split rule invalidates all evaluation claims on the test set.
+information leakage from future reviews into training. Violating the no-random-split
+rule invalidates all evaluation claims on the test set.
 
 ### IV. Explainability as First-Class Concern
 
