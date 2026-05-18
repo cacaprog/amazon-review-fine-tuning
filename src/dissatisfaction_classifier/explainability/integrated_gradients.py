@@ -11,18 +11,16 @@ _BLUE = "#4444ff"
 
 
 def _resolve_embedding_layer(model) -> torch.nn.Module:
-    """Resolve word embedding layer backbone-agnostically."""
-    candidates = [
-        "base_model.embeddings.word_embeddings",
-        "base_model.distilbert.embeddings.word_embeddings",
-        "base_model.bert.embeddings.word_embeddings",
-        "base_model.roberta.embeddings.word_embeddings",
-        "base_model.deberta.embeddings.word_embeddings",
-    ]
+    """Resolve word embedding layer backbone-agnostically.
+
+    Searches all named modules for one ending in 'word_embeddings', which is
+    stable across backbone families and PEFT wrapping depths.
+    """
     module_dict = dict(model.named_modules())
-    for path in candidates:
-        if path in module_dict:
-            return module_dict[path]
+    for name, module in module_dict.items():
+        if name.endswith("word_embeddings"):
+            logger.debug("Resolved embedding layer: %s", name)
+            return module
     raise ValueError(
         f"Cannot resolve word embedding layer for backbone. Modules: {list(module_dict.keys())[:20]}"
     )
@@ -74,7 +72,9 @@ def get_integrated_gradients(
     baseline = torch.zeros_like(input_embeddings)
 
     def forward_func(embeddings):
-        outputs = model(inputs_embeds=embeddings, attention_mask=attention_mask)
+        # Captum passes n_steps inputs at once; expand mask to match batch size
+        expanded_mask = attention_mask.expand(embeddings.shape[0], -1)
+        outputs = model(inputs_embeds=embeddings, attention_mask=expanded_mask)
         return outputs.logits[:, target_label]
 
     ig = IntegratedGradients(forward_func)
