@@ -1,6 +1,6 @@
 # Critical Dissatisfaction Early Warning — Study Notes
 
-Everything learned building this project end-to-end: dataset quirks, architecture decisions, training details, results, bugs fixed, and what to improve next.
+Everything learned building this project end-to-end.
 
 ---
 
@@ -63,6 +63,12 @@ Chosen over BERT-base because:
 ### LoRA (Low-Rank Adaptation via PEFT)
 
 Instead of fine-tuning all 66.9M parameters, LoRA adds trainable rank decomposition matrices to the attention layers only.
+
+**Important conceptual clarification:** LoRA is **not** a "redirector" or mere "perturbation." It is a **low-rank additive adaptation**. The output of a LoRA layer is:
+
+`h = W₀x + BAx`
+
+The original weights `W₀` remain frozen, but the new parameters `A` and `B` **add to** the original transformation. The model gains a new, low-rank computational path that combines with pre-existing knowledge — it is not simply "pointed" at the task.
 
 **Config**:
 ```yaml
@@ -173,6 +179,15 @@ The TF-IDF baseline is surprisingly strong (AUC 0.991) — this is typical for s
 - **Conditional structure**: "looks nice but falls apart"
 - **Context across sentence boundaries**: the headline "One Star" boosting the body's attribution
 
+### Qualitative Error Analysis: Where the Transformer Actually Wins
+
+| Case Type | Example | Why TF-IDF Fails | Why Transformer Wins |
+|-----------|---------|------------------|----------------------|
+| Scoped negation | "Not bad at all" | Weights "bad" positively | Reads the full scope |
+| Adversative conjunction | "Looks nice but falls apart" | Equal weights for both | Understands concession |
+| Title as prior | "One Star. Very low quality..." | Title is just another token | Uses title as prior for body |
+| Cross-sentence context | "Beautiful design. Assembly was a nightmare." | Treats sentences independently | Integrates both sentences |
+
 ### Threshold analysis
 
 The precision-recall curve shows the model maintains >0.93 precision at recall levels up to 0.95. This means it can flag ~95% of truly dissatisfied reviews while keeping false positives to <7% — operationally viable for customer service triage.
@@ -235,7 +250,34 @@ The `merge` on `token` column mostly produces NaN because the token vocabularies
 
 ---
 
-## 8. Key Engineering Decisions
+## 8. LoRA Trade-offs and Limitations (Critical Addendum)
+
+LoRA is not a cost-free improvement. Understanding its limitations is essential for production decisions.
+
+### 8.1 Parameter Efficiency ≠ Inference Computational Efficiency
+
+- Full fine-tuning: `h = Wx`
+- LoRA (without merging): `h = W₀x + BAx`
+
+The addition of `BAx` has a cost. To eliminate this latency, you must **merge** the weights after training: `W_merged = W₀ + BA`. This solves the problem but makes it impossible to swap adapters dynamically for different tasks.
+
+**Production implication:** If you need multiple adapters (one per customer segment, one per product category), LoRA without merging incurs latency overhead. If you merge, you lose adapter swappability.
+
+### 8.2 Fundamental Limitation: LoRA Cannot "Correct" Pre-existing Knowledge
+
+LoRA adds a low-rank adaptation. If the base model has a severe bias (e.g., associating "cheap" with "bad" in every context), LoRA may not be sufficient to correct it. Full fine-tuning is still superior for domains very different from pre-training.
+
+**Evidence from literature:** Xu et al. (2023) classify LoRA as an "addition-based" method, contrasting it with full fine-tuning which can reweigh all features.
+
+### 8.3 The Rank Problem: More Capacity Is Not Always Better
+
+Increasing `r` from 8 to 16 or 32 adds expressivity, but also increases the risk of **overfitting** — especially on small datasets. The conservative `r=8` used here was a deliberate choice, not just due to VRAM.
+
+**Recommendation:** When increasing rank, monitor validation metrics closely. If F1 stops improving or validation loss starts increasing, you've found the sweet spot.
+
+---
+
+## 9. Key Engineering Decisions
 
 ### Package manager: uv (not conda)
 
@@ -260,7 +302,7 @@ Temporal split simulates real deployment: train on historical data, evaluate on 
 
 ---
 
-## 9. Bugs Encountered and Fixed
+## 10. Bugs Encountered and Fixed
 
 | Bug | Root Cause | Fix |
 |-----|-----------|-----|
@@ -277,7 +319,7 @@ Temporal split simulates real deployment: train on historical data, evaluate on 
 
 ---
 
-## 10. Project Structure
+## 11. Project Structure
 
 ```
 amazon-review-cl/
@@ -329,7 +371,7 @@ amazon-review-cl/
 
 ---
 
-## 11. How to Reproduce
+## 12. How to Reproduce
 
 ```bash
 # 1. Environment
@@ -365,14 +407,19 @@ uv run python demo/app.py
 
 ---
 
-## 12. Next Steps to Improve
+## 13. Next Steps and Proposed Improvements
 
-### Model quality
+### Immediate (short-term)
 
-- **Increase LoRA rank**: `r=8` is conservative. Try `r=16` or `r=32` — more capacity for the task at the cost of ~2% more trainable params. Benchmark with a short training run.
+- **Increase IG `n_steps` to 200** (reduces convergence delta from ~0.97 to ~0.05)
+- **Aggregate subword attributions to word level** for proper IG vs. SHAP comparison
+- **Add early stopping** (`patience=2`) — the model converged at epoch 4
+
+### Model and Architecture
+
+- **Increase LoRA rank**: `r=8` is conservative. Try `r=16` or `r=32` — more capacity for the task at the cost of ~2% more trainable params. But monitor for overfitting.
 - **Try RoBERTa or DeBERTa**: both generally outperform DistilBERT on classification tasks. DeBERTa-v3-base is particularly strong on imbalanced sentiment. The `lora_wrapper.py` already supports them — just change `backbone` in `model_config.yaml`.
 - **Longer sequences**: `max_length=256` truncates long reviews. Try 384 or 512 — trades memory/speed for potentially better coverage of long complaints.
-- **Data augmentation**: back-translation or synonym replacement on the minority class (dissatisfied) could help, given the 16/84 imbalance.
 
 ### Training efficiency
 
@@ -390,7 +437,6 @@ uv run python demo/app.py
 
 - **Stratified threshold search**: instead of a single optimal threshold from F1, find the threshold that minimises a business cost function `FN_cost * FN + FP_cost * FP`. Requires an estimate of relative costs.
 - **Temporal drift analysis**: slice the test set by month (May vs. June vs. July vs. August 2015) and check if metrics degrade over time — an early signal of concept drift in deployment.
-- **Error analysis by product subcategory**: if the dataset includes a product category column, check if error rates differ (e.g., furniture assembly reviews vs. ready-made). The model may be weaker on subcategories underrepresented in training.
 
 ### Production readiness
 
@@ -398,3 +444,99 @@ uv run python demo/app.py
 - **ONNX export**: convert the merged model to ONNX for CPU inference at 3–5x the speed of PyTorch. Useful if serving without GPU.
 - **Confidence thresholding in predictor**: route reviews with risk score between 0.4 and 0.6 to a human reviewer rather than making a binary call — the model is least reliable in this range.
 - **Monitoring**: track ECE over time in production. If ECE rises above 0.05, re-fit the isotonic calibrator on recent labeled data without retraining the backbone.
+
+---
+
+## 14. Glossary
+
+### Models and Architectures
+
+**DistilBERT** — A distilled (compressed) version of BERT with 6 transformer layers, 768 hidden dimensions, and 66.9M parameters. Retains ~97% of BERT's GLUE performance at 40% fewer parameters and 60% faster inference. Backbone used in this project.
+
+**BERT** (Bidirectional Encoder Representations from Transformers) — Google's foundational transformer encoder model. Pre-trained on masked language modeling and next-sentence prediction. Uses attention module names `query` / `value`.
+
+**LoRA** (Low-Rank Adaptation) — A parameter-efficient fine-tuning technique that injects trainable rank-decomposition matrices into frozen attention layers. **Conceptually important:** LoRA is a **low-rank additive adaptation** (`h = W₀x + BAx`), not a mere "redirector." Only ~1% of parameters are trained, drastically reducing GPU memory and compute. Configured via `r` (rank), `lora_alpha`, `lora_dropout`, and `target_modules`.
+
+**PEFT** (Parameter-Efficient Fine-Tuning) — HuggingFace library implementing LoRA and related methods. Wraps a base model into a `PeftModel` and adds the `base_model.model.*` prefix to module paths.
+
+**PeftModel** — The wrapper class produced by applying LoRA to a `PreTrainedModel`. Supports `merge_and_unload()` to fuse LoRA weights back into the base model for deployment. Note: merging improves inference speed but prevents dynamic adapter swapping.
+
+**TF-IDF + Logistic Regression** — Bag-of-words baseline. TF-IDF (Term Frequency–Inverse Document Frequency) converts text to sparse vectors; logistic regression classifies them. Strong for lexical tasks; cannot model negation scope or cross-sentence context.
+
+### LoRA Trade-offs (Critical)
+
+| Aspect | Full Fine-Tuning | LoRA (no merge) | LoRA (merged) |
+|--------|------------------|-----------------|---------------|
+| Trainable params | 100% | ~1% | ~1% |
+| Inference speed | Baseline | Slower (adds BAx) | Same as baseline |
+| Can swap adapters? | N/A | Yes | No |
+| Can correct deep biases? | Yes | Limited | Limited |
+
+### Training Concepts
+
+**Fine-tuning** — Adapting a pre-trained model to a downstream task by continuing training on task-specific data, either updating all weights (full fine-tuning) or a small subset (parameter-efficient fine-tuning).
+
+**Temporal splitting** — Dividing data by time rather than randomly to simulate real deployment conditions. Prevents future data from leaking into training. This project uses train ≤ 2014, val = 2015-H1, test = 2015-H2.
+
+**Class weighting** — Technique for imbalanced datasets: assign higher loss weight to the minority class. Computed via `sklearn.utils.class_weight.compute_class_weight('balanced')`. Requires `classes` as `np.ndarray`.
+
+**Early stopping** — Halting training when a monitored validation metric stops improving for `patience` consecutive evaluations. Prevents overfitting and wasted compute.
+
+### Evaluation Metrics
+
+**F1 score** — Harmonic mean of precision and recall: `2 * (P * R) / (P + R)`. Balances both false positives and false negatives. More informative than accuracy on imbalanced datasets.
+
+**AUC-ROC** (Area Under the Receiver Operating Characteristic Curve) — Measures the model's ability to rank positive instances above negatives across all thresholds. 1.0 = perfect, 0.5 = random. Threshold-independent.
+
+**ECE** (Expected Calibration Error) — Measures how well predicted probabilities match observed frequencies. ECE = 0 means a predicted 70% risk corresponds to exactly 70% true dissatisfaction. Values below 0.05 are considered well-calibrated; this project achieves 0.0105.
+
+**Optimal threshold** — The classification cutoff that maximizes F1 (or a business cost function) on the validation set. Found to be 0.574 in this project vs. the default 0.5.
+
+### Calibration
+
+**Calibration** — The degree to which a model's predicted probabilities reflect true empirical frequencies. A well-calibrated model that predicts 0.8 is right ~80% of the time.
+
+**Isotonic regression** — A non-parametric monotone calibration method. Fit on validation set probabilities and true labels; maps raw scores to calibrated probabilities. Used as a fallback if ECE exceeds 0.05.
+
+### Explainability
+
+**Integrated Gradients (IG)** — Attribution method from the captum library. Interpolates the input from a zero-embedding baseline to the actual input in `n_steps` steps and integrates the gradients along the path. Produces one score per token, normalized to [-1, 1].
+
+**SHAP** (SHapley Additive exPlanations) — Framework for explaining model predictions using Shapley values from cooperative game theory. O(n²) perturbations per sample — expensive; limit to ≤ 10 texts.
+
+**`merge_and_unload()`** — PeftModel method that merges LoRA weight deltas into the base model's weight matrices, producing a standard `PreTrainedModel`. Required for SHAP pipeline compatibility.
+
+### Attention Module Names by Backbone
+
+| Backbone | Query module | Value module |
+|----------|-------------|-------------|
+| DistilBERT | `q_lin` | `v_lin` |
+| BERT | `query` | `value` |
+| RoBERTa | `query` | `value` |
+| DeBERTa | `query_proj` | `value_proj` |
+
+These names reflect each model's internal attention implementation and must match `lora_config.target_modules` exactly. Always verify with `model.named_modules()`.
+
+---
+
+## 15. Key Conceptual Corrections (Based on Literature Review)
+
+Based on the critical review by Xu et al. (2023, arXiv:2312.12148) and the original LoRA paper (Hu et al., 2021), the following corrections were applied to the initial understanding:
+
+| Original (incorrect) framing | Corrected framing |
+|------------------------------|-------------------|
+| LoRA "redirects" or "points" the model | LoRA performs **low-rank additive adaptation**: `h = W₀x + BAx` |
+| LoRA has no inference cost | LoRA without merging is **slower than full fine-tuning** due to the added `BAx` term |
+| Higher rank (`r`) is always better | Higher rank increases **risk of overfitting**; optimal rank is task-dependent |
+| LoRA can replace full fine-tuning | LoRA **cannot correct deep biases** in the backbone; full fine-tuning is still superior for out-of-domain tasks |
+| Parameter efficiency = compute efficiency | Parameter efficiency ≠ inference efficiency; merging solves this but removes adapter swappability |
+
+---
+
+## 16. References
+
+- Dataset: *Amazon US Customer Reviews — Furniture* (Kaggle, 2000–2015)
+- DistilBERT: Sanh et al. (2019). *DistilBERT, a distilled version of BERT*. arXiv:1910.01108
+- LoRA: Hu et al. (2021). *LoRA: Low-Rank Adaptation of Large Language Models*. arXiv:2106.09685
+- Critical PEFT review: Xu et al. (2023). *Parameter-Efficient Fine-Tuning Methods for Pretrained Language Models: A Critical Review and Assessment*. arXiv:2312.12148
+```
